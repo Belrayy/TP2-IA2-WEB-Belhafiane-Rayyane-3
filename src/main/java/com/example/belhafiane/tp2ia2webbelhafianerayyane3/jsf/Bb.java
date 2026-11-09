@@ -1,5 +1,6 @@
 package com.example.belhafiane.tp2ia2webbelhafianerayyane3.jsf;
 
+import com.example.belhafiane.tp2ia2webbelhafianerayyane3.llm.LlmClient;
 import com.example.belhafiane.tp2ia2webbelhafianerayyane3.service.GenerateurReponse;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -119,23 +120,30 @@ public class Bb implements Serializable {
      * @return null pour rester sur la même page.
      */
     public String envoyer() {
+
         if (this.question == null || this.question.isBlank()) {
-            // Erreur ! Le formulaire va être réaffiché en réponse à la requête POST, avec un message d'erreur.
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    "Texte question vide", "Il manque le texte de la question");
+            FacesMessage message = new FacesMessage(
+                    FacesMessage.SEVERITY_ERROR,
+                    "Texte question vide",
+                    "Il manque le texte de la question"
+            );
+
             facesContext.addMessage(null, message);
             return null;
         }
 
-        // Traite la question pour construire la réponse.
-        if (this.conversation.isEmpty()) { // Si la conversation n'a pas encore commencé
-            // Fige la liste déroulante qui permet de choisir le rôle système
+        if (this.conversation.isEmpty()) {
             this.roleSystemeChangeable = false;
-        }
-        this.reponse = this.generateurReponse.genererReponse(this.question, this.roleSysteme);
 
-        // La conversation contient l'historique des questions-réponses depuis le début.
+            this.llmClient.setSystemRole(this.roleSysteme);
+        }
+
+        this.reponse = this.llmClient.chat(this.question);
+
         afficherConversation();
+
+        this.question = "";
+
         return null;
     }
 
@@ -190,5 +198,10 @@ public class Bb implements Serializable {
 
         return this.listeRolesSysteme;
     }
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private LlmClient llmClient;
 
 }
